@@ -1,0 +1,53 @@
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+
+-- Создаем ScreenGui для отображения индикаторов
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Функция для обновления индикатора игрока
+function updateIndicator(player)
+    if not player.Character then return end
+    
+    local character = player.Character
+    local head = character:FindFirstChild("Head")
+    
+    if not head then return end
+    
+    -- Получаем позицию игрока в пространстве
+    local screenPosition, onScreen = Camera:WorldToScreenPoint(head.Position)
+    
+    -- Если игрок на экране, показываем его индикатор
+    local indicator = screenGui:FindFirstChild(player.Name)
+    
+    -- Если индикатора нет, создаем его
+    if not indicator then
+        indicator = Instance.new("TextLabel")
+        indicator.Name = player.Name
+        indicator.Size = UDim2.new(0, 60, 0, 15)  -- Уменьшаем размер текста
+        indicator.BackgroundTransparency = 1
+        indicator.TextColor3 = Color3.fromRGB(255, 255, 255)
+        indicator.Text = player.Name
+        indicator.TextScaled = true  -- Текст будет подстраиваться по размеру
+        indicator.Parent = screenGui
+    end
+
+    -- Если игрок на экране
+    if onScreen then
+        indicator.Visible = true
+        -- Обновляем позицию индикатора на экране (еще ближе к игроку)
+        indicator.Position = UDim2.new(0, screenPosition.X, 0, screenPosition.Y - 5)  -- Очень близко, почти на голове
+    else
+        indicator.Visible = false
+    end
+end
+
+-- Главная функция для отслеживания всех игроков
+RunService.Heartbeat:Connect(function()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            updateIndicator(player)
+        end
+    end
+end)
