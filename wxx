@@ -1,53 +1,91 @@
-local Players = game:GetService("Players")
-local Camera = workspace.CurrentCamera
-local RunService = game:GetService("RunService")
+-- Локальный скрипт для подсветки игроков через стены с обновлением каждые 3 секунды
 
--- Создаем ScreenGui для отображения индикаторов
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+local player = game.Players.LocalPlayer
+local camera = game.Workspace.CurrentCamera
+local players = game.Players
 
--- Функция для обновления индикатора игрока
-function updateIndicator(player)
-    if not player.Character then return end
-    
-    local character = player.Character
-    local head = character:FindFirstChild("Head")
-    
-    if not head then return end
-    
-    -- Получаем позицию игрока в пространстве
-    local screenPosition, onScreen = Camera:WorldToScreenPoint(head.Position)
-    
-    -- Если игрок на экране, показываем его индикатор
-    local indicator = screenGui:FindFirstChild(player.Name)
-    
-    -- Если индикатора нет, создаем его
-    if not indicator then
-        indicator = Instance.new("TextLabel")
-        indicator.Name = player.Name
-        indicator.Size = UDim2.new(0, 60, 0, 15)  -- Уменьшаем размер текста
-        indicator.BackgroundTransparency = 1
-        indicator.TextColor3 = Color3.fromRGB(255, 255, 255)
-        indicator.Text = player.Name
-        indicator.TextScaled = true  -- Текст будет подстраиваться по размеру
-        indicator.Parent = screenGui
-    end
+local highlightColor = Color3.fromRGB(255, 255, 0)  -- Цвет подсветки (желтый)
 
-    -- Если игрок на экране
-    if onScreen then
-        indicator.Visible = true
-        -- Обновляем позицию индикатора на экране (еще ближе к игроку)
-        indicator.Position = UDim2.new(0, screenPosition.X, 0, screenPosition.Y - 5)  -- Очень близко, почти на голове
-    else
-        indicator.Visible = false
+-- Функция для создания подсветки игрока
+local function createGlowEffect(targetPlayer)
+    local targetCharacter = targetPlayer.Character
+    if targetCharacter then
+        -- Создаем Highlight для подсветки
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "GlowHighlight"
+        highlight.Parent = targetCharacter
+        highlight.Adornee = targetCharacter  -- Устанавливаем, что подсвечиваем
+        highlight.FillColor = highlightColor  -- Цвет подсветки
+        highlight.OutlineColor = highlightColor  -- Цвет контура подсветки
+        highlight.FillTransparency = 0.5  -- Прозрачность
+        highlight.OutlineTransparency = 0.5  -- Прозрачность контура
+        highlight.Enabled = true  -- Включаем подсветку
     end
 end
 
--- Главная функция для отслеживания всех игроков
-RunService.Heartbeat:Connect(function()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= game.Players.LocalPlayer then
-            updateIndicator(player)
+-- Функция для удаления подсветки
+local function removeGlowEffect(targetPlayer)
+    local targetCharacter = targetPlayer.Character
+    if targetCharacter then
+        -- Удаляем Highlight
+        local highlight = targetCharacter:FindFirstChild("GlowHighlight")
+        if highlight then
+            highlight:Destroy()
         end
     end
+end
+
+-- Функция для применения эффекта ко всем игрокам
+local function applyGlowToAllPlayers()
+    for _, targetPlayer in pairs(players:GetPlayers()) do
+        if targetPlayer ~= player then
+            createGlowEffect(targetPlayer)
+        end
+    end
+end
+
+-- Обновление эффекта подсветки каждую секунду
+local function updateGlowEffects()
+    while true do
+        for _, targetPlayer in pairs(players:GetPlayers()) do
+            if targetPlayer ~= player then
+                -- Удаляем старую подсветку и создаем новую
+                removeGlowEffect(targetPlayer)
+                createGlowEffect(targetPlayer)
+            end
+        end
+        wait(3)  -- Обновляем подсветку каждые 3 секунды
+    end
+end
+
+-- Применяем эффект сразу при старте
+applyGlowToAllPlayers()
+
+-- Применяем эффект, когда появляется новый игрок
+players.PlayerAdded:Connect(function(newPlayer)
+    if newPlayer ~= player then
+        createGlowEffect(newPlayer)
+    end
 end)
+
+-- Обновляем эффект при каждом респавне
+player.CharacterAdded:Connect(function(newCharacter)
+    -- Очищаем старые эффекты
+    for _, child in pairs(newCharacter:GetChildren()) do
+        if child:IsA("Highlight") then
+            child:Destroy()
+        end
+    end
+    -- Применяем эффект к новым частям
+    applyGlowToAllPlayers()
+end)
+
+-- Очищаем эффекты, когда игрок уходит
+players.PlayerRemoving:Connect(function(leavingPlayer)
+    if leavingPlayer ~= player then
+        removeGlowEffect(leavingPlayer)
+    end
+end)
+
+-- Запуск обновления эффектов
+updateGlowEffects()
