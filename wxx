@@ -4,7 +4,7 @@ local player = game.Players.LocalPlayer
 local camera = game.Workspace.CurrentCamera
 local players = game.Players
 
-local highlightColor = Color3.fromRGB(255, 255, 0)  -- Цвет подсветки (желтый)
+local highlightColor = Color3.fromRGB(0 , 128 , 0)  -- Цвет подсветки (желтый)
 
 -- Функция для создания подсветки игрока
 local function createGlowEffect(targetPlayer)
