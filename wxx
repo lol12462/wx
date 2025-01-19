@@ -3,15 +3,16 @@
 local player = game.Players.LocalPlayer
 local players = game:GetService("Players")
 local runService = game:GetService("RunService")
+local workspace = game:GetService("Workspace")
 
 local highlightColor = Color3.fromRGB(0, 255, 0) -- Цвет подсветки (зелёный)
 
--- Функция для создания подсветки вокруг всего игрока
+-- Функция для создания подсветки вокруг головы игрока
 local function createGlowEffect(targetPlayer)
-    -- Проверяем, есть ли у игрока персонаж и часть "HumanoidRootPart"
-    if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+    -- Проверяем, есть ли у игрока персонаж и часть "Head"
+    if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
         local character = targetPlayer.Character
-        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        local head = character:FindFirstChild("Head")
         
         -- Проверка, чтобы не создавать подсветку дважды
         local existingGlow = character:FindFirstChild("GlowBox")
@@ -19,28 +20,30 @@ local function createGlowEffect(targetPlayer)
             return
         end
 
-        -- Получаем размеры всей модели персонажа
-        local characterSize = character:GetExtentsSize()
-        
-        -- Исправление размера рамки, чтобы она не была слишком большой или маленькой
-        local adjustedSize = Vector3.new(
-            math.min(characterSize.X * 1.1, 6),  -- Ограничиваем максимальный размер по оси X
-            math.min(characterSize.Y * 1.1, 6),  -- Ограничиваем максимальный размер по оси Y
-            math.min(characterSize.Z * 1.1, 6)   -- Ограничиваем максимальный размер по оси Z
-        )
+        -- Создаём BillboardGui для подсветки
+        local glowGui = Instance.new("BillboardGui")
+        glowGui.Name = "GlowBox"
+        glowGui.Parent = character
+        glowGui.Adornee = head  -- Привязываем подсветку к голове
+        glowGui.Size = UDim2.new(0, 10, 0, 10)  -- Размер подсветки (квадрат)
+        glowGui.StudsOffset = Vector3.new(0, 0, 0)  -- Подсветка на уровне головы
 
-        -- Создаём BoxHandleAdornment для всей модели
-        local glowBox = Instance.new("BoxHandleAdornment")
-        glowBox.Name = "GlowBox"
-        glowBox.Parent = character
-        glowBox.Adornee = humanoidRootPart
-        glowBox.Size = adjustedSize  -- Используем откорректированные размеры
-        glowBox.Transparency = 0.5
-        glowBox.Color3 = highlightColor
-        glowBox.OutlineColor3 = highlightColor
-        glowBox.OutlineTransparency = 0
-        glowBox.ZIndex = 100 -- Обеспечиваем, чтобы был поверх
-        glowBox.AlwaysOnTop = true
+        -- Настройка рамки
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(0, 10, 0, 10)  -- Размер квадратика (площадь 10x10)
+        frame.BackgroundTransparency = 0.5
+        frame.BackgroundColor3 = highlightColor
+        frame.BorderSizePixel = 0
+        frame.Parent = glowGui
+        
+        -- Настройка рамки для подсветки
+        local outline = Instance.new("UIStroke")
+        outline.Thickness = 2
+        outline.Color = highlightColor
+        outline.Parent = frame
+
+        -- Включение всегда на переднем плане
+        glowGui.AlwaysOnTop = true
     end
 end
 
