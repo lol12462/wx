@@ -1,42 +1,61 @@
--- Локальный скрипт для подсветки игроков через стены с обновлением каждые 3 секунды
+-- Локальный скрипт для подсветки игроков через стены
 
 local player = game.Players.LocalPlayer
-local camera = game.Workspace.CurrentCamera
-local players = game.Players
+local players = game:GetService("Players")
+local runService = game:GetService("RunService")
 
-local highlightColor = Color3.fromRGB(0 , 128 , 0)  -- Цвет подсветки (желтый)
+local highlightColor = Color3.fromRGB(0, 255, 0) -- Цвет подсветки (зелёный)
 
--- Функция для создания подсветки игрока
+-- Функция для создания подсветки вокруг всего игрока
 local function createGlowEffect(targetPlayer)
-    local targetCharacter = targetPlayer.Character
-    if targetCharacter then
-        -- Создаем Highlight для подсветки
-        local highlight = Instance.new("Highlight")
-        highlight.Name = "GlowHighlight"
-        highlight.Parent = targetCharacter
-        highlight.Adornee = targetCharacter  -- Устанавливаем, что подсвечиваем
-        highlight.FillColor = highlightColor  -- Цвет подсветки
-        highlight.OutlineColor = highlightColor  -- Цвет контура подсветки
-        highlight.FillTransparency = 0.5  -- Прозрачность
-        highlight.OutlineTransparency = 0.5  -- Прозрачность контура
-        highlight.Enabled = true  -- Включаем подсветку
+    -- Проверяем, есть ли у игрока персонаж и часть "HumanoidRootPart"
+    if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local character = targetPlayer.Character
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        
+        -- Проверка, чтобы не создавать подсветку дважды
+        local existingGlow = character:FindFirstChild("GlowBox")
+        if existingGlow then
+            return
+        end
+
+        -- Получаем размеры всей модели персонажа
+        local characterSize = character:GetExtentsSize()
+        
+        -- Исправление размера рамки, чтобы она не была слишком большой или маленькой
+        local adjustedSize = Vector3.new(
+            math.min(characterSize.X * 1.1, 6),  -- Ограничиваем максимальный размер по оси X
+            math.min(characterSize.Y * 1.1, 6),  -- Ограничиваем максимальный размер по оси Y
+            math.min(characterSize.Z * 1.1, 6)   -- Ограничиваем максимальный размер по оси Z
+        )
+
+        -- Создаём BoxHandleAdornment для всей модели
+        local glowBox = Instance.new("BoxHandleAdornment")
+        glowBox.Name = "GlowBox"
+        glowBox.Parent = character
+        glowBox.Adornee = humanoidRootPart
+        glowBox.Size = adjustedSize  -- Используем откорректированные размеры
+        glowBox.Transparency = 0.5
+        glowBox.Color3 = highlightColor
+        glowBox.OutlineColor3 = highlightColor
+        glowBox.OutlineTransparency = 0
+        glowBox.ZIndex = 100 -- Обеспечиваем, чтобы был поверх
+        glowBox.AlwaysOnTop = true
     end
 end
 
 -- Функция для удаления подсветки
 local function removeGlowEffect(targetPlayer)
-    local targetCharacter = targetPlayer.Character
-    if targetCharacter then
-        -- Удаляем Highlight
-        local highlight = targetCharacter:FindFirstChild("GlowHighlight")
-        if highlight then
-            highlight:Destroy()
+    if targetPlayer.Character then
+        local glowBox = targetPlayer.Character:FindFirstChild("GlowBox")
+        if glowBox then
+            glowBox:Destroy()
         end
     end
 end
 
--- Функция для применения эффекта ко всем игрокам
-local function applyGlowToAllPlayers()
+-- Обновление подсветки для всех игроков
+local function updateGlowEffects()
     for _, targetPlayer in pairs(players:GetPlayers()) do
         if targetPlayer ~= player then
             createGlowEffect(targetPlayer)
@@ -44,48 +63,20 @@ local function applyGlowToAllPlayers()
     end
 end
 
--- Обновление эффекта подсветки каждую секунду
-local function updateGlowEffects()
-    while true do
-        for _, targetPlayer in pairs(players:GetPlayers()) do
-            if targetPlayer ~= player then
-                -- Удаляем старую подсветку и создаем новую
-                removeGlowEffect(targetPlayer)
-                createGlowEffect(targetPlayer)
-            end
-        end
-        wait(3)  -- Обновляем подсветку каждые 3 секунды
-    end
-end
-
--- Применяем эффект сразу при старте
-applyGlowToAllPlayers()
-
--- Применяем эффект, когда появляется новый игрок
+-- Обработчик появления нового игрока
 players.PlayerAdded:Connect(function(newPlayer)
-    if newPlayer ~= player then
+    newPlayer.CharacterAdded:Connect(function()
         createGlowEffect(newPlayer)
-    end
+    end)
 end)
 
--- Обновляем эффект при каждом респавне
-player.CharacterAdded:Connect(function(newCharacter)
-    -- Очищаем старые эффекты
-    for _, child in pairs(newCharacter:GetChildren()) do
-        if child:IsA("Highlight") then
-            child:Destroy()
-        end
-    end
-    -- Применяем эффект к новым частям
-    applyGlowToAllPlayers()
-end)
-
--- Очищаем эффекты, когда игрок уходит
+-- Обработчик удаления игрока
 players.PlayerRemoving:Connect(function(leavingPlayer)
-    if leavingPlayer ~= player then
-        removeGlowEffect(leavingPlayer)
-    end
+    removeGlowEffect(leavingPlayer)
 end)
 
--- Запуск обновления эффектов
+-- Постоянное обновление подсветки
+runService.Heartbeat:Connect(updateGlowEffects)
+
+-- Применяем подсветку ко всем игрокам при старте
 updateGlowEffects()
