@@ -1,9 +1,70 @@
--- Локальный скрипт для подсветки игроков через стены
+-- Создаем ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "HighlightToggleMenu"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
+-- Создаем кнопку
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 200, 0, 50)
+button.Position = UDim2.new(0.5, -100, 0.5, -25)
+button.Text = "Выключить Вх"
+button.BackgroundColor3 = Color3.fromRGB(0, 170, 255) -- Голубой фон
+button.TextColor3 = Color3.fromRGB(255, 255, 255) -- Белый текст
+button.Font = Enum.Font.SourceSansBold
+button.TextSize = 20
+button.BorderSizePixel = 0
+button.Parent = screenGui
+
+-- Добавляем круглые края
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 12)
+uiCorner.Parent = button
+
+-- Добавляем тень
+local shadow = Instance.new("Frame")
+shadow.Size = UDim2.new(1, 8, 1, 8)
+shadow.Position = UDim2.new(0, -4, 0, -4)
+shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+shadow.BackgroundTransparency = 0.5
+shadow.BorderSizePixel = 0
+shadow.ZIndex = 0
+shadow.Parent = button
+
+local shadowCorner = Instance.new("UICorner")
+shadowCorner.CornerRadius = UDim.new(0, 12)
+shadowCorner.Parent = shadow
+
+-- Делаем кнопку перетаскиваемой
+local dragging = false
+local dragStart, startPos
+
+button.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = button.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+button.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- Флаг состояния работы подсветки
+local isHighlightActive = true
+
+-- Локальный скрипт для подсветки игроков через стены
 local player = game.Players.LocalPlayer
 local players = game:GetService("Players")
 local runService = game:GetService("RunService")
-local workspace = game:GetService("Workspace")
 
 local highlightColor = Color3.fromRGB(0, 255, 0) -- Цвет подсветки (зелёный)
 
@@ -35,7 +96,7 @@ local function createGlowEffect(targetPlayer)
         frame.BackgroundColor3 = highlightColor
         frame.BorderSizePixel = 0
         frame.Parent = glowGui
-        
+
         -- Настройка рамки для подсветки
         local outline = Instance.new("UIStroke")
         outline.Thickness = 2
@@ -59,6 +120,7 @@ end
 
 -- Обновление подсветки для всех игроков
 local function updateGlowEffects()
+    if not isHighlightActive then return end
     for _, targetPlayer in pairs(players:GetPlayers()) do
         if targetPlayer ~= player then
             createGlowEffect(targetPlayer)
@@ -69,7 +131,9 @@ end
 -- Обработчик появления нового игрока
 players.PlayerAdded:Connect(function(newPlayer)
     newPlayer.CharacterAdded:Connect(function()
-        createGlowEffect(newPlayer)
+        if isHighlightActive then
+            createGlowEffect(newPlayer)
+        end
     end)
 end)
 
@@ -83,3 +147,18 @@ runService.Heartbeat:Connect(updateGlowEffects)
 
 -- Применяем подсветку ко всем игрокам при старте
 updateGlowEffects()
+
+-- Обработчик нажатия кнопки
+button.MouseButton1Click:Connect(function()
+    isHighlightActive = not isHighlightActive
+    if isHighlightActive then
+        button.Text = "Выключить Вх"
+        updateGlowEffects()
+    else
+        button.Text = "Включить Вх"
+        -- Удаляем подсветку у всех игроков
+        for _, targetPlayer in pairs(players:GetPlayers()) do
+            removeGlowEffect(targetPlayer)
+        end
+    end
+end)
