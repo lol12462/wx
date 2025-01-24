@@ -1,0 +1,152 @@
+-- Создаём ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Создаём основное окно (Frame)
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 300, 0, 200)
+Frame.Position = UDim2.new(0.5, -150, 0.5, -100)
+Frame.BackgroundColor3 = Color3.new(0.15, 0.15, 0.15)
+Frame.BorderSizePixel = 0
+Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+Frame.Parent = ScreenGui
+
+-- Уголок для стиля
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = Frame
+
+-- Кнопка для сворачивания
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
+MinimizeButton.Position = UDim2.new(1, -40, 0, 10)
+MinimizeButton.Text = "-"
+MinimizeButton.TextSize = 18
+MinimizeButton.TextColor3 = Color3.new(1, 1, 1)
+MinimizeButton.Font = Enum.Font.SourceSansBold
+MinimizeButton.BackgroundColor3 = Color3.new(0.25, 0.25, 0.25)
+MinimizeButton.Parent = Frame
+
+-- Заголовок
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -40, 0.2, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Auto Clicker"
+Title.TextSize = 20
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.Font = Enum.Font.SourceSansBold
+Title.Parent = Frame
+
+-- Кнопка Вкл/Выкл
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0.8, 0, 0.2, 0)
+ToggleButton.Position = UDim2.new(0.1, 0, 0.3, 0)
+ToggleButton.Text = "Enable"
+ToggleButton.TextSize = 18
+ToggleButton.TextColor3 = Color3.new(1, 1, 1)
+ToggleButton.Font = Enum.Font.SourceSansBold
+ToggleButton.BackgroundColor3 = Color3.new(0.25, 0.25, 0.25)
+ToggleButton.Parent = Frame
+
+-- Поле для ввода задержки
+local DelayLabel = Instance.new("TextLabel")
+DelayLabel.Size = UDim2.new(0.8, 0, 0.15, 0)
+DelayLabel.Position = UDim2.new(0.1, 0, 0.55, 0)
+DelayLabel.Text = "Delay (seconds):"
+DelayLabel.TextSize = 16
+DelayLabel.TextColor3 = Color3.new(1, 1, 1)
+DelayLabel.BackgroundTransparency = 1
+DelayLabel.Font = Enum.Font.SourceSans
+DelayLabel.Parent = Frame
+
+local DelayInput = Instance.new("TextBox")
+DelayInput.Size = UDim2.new(0.8, 0, 0.2, 0)
+DelayInput.Position = UDim2.new(0.1, 0, 0.7, 0)
+DelayInput.Text = "0.1"
+DelayInput.TextSize = 16
+DelayInput.TextColor3 = Color3.new(0, 0, 0)
+DelayInput.Font = Enum.Font.SourceSans
+DelayInput.BackgroundColor3 = Color3.new(1, 1, 1)
+DelayInput.Parent = Frame
+
+-- Перемещение окна
+local dragging = false
+local dragInput, dragStart, startPos
+
+Frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = Frame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+Frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- Логика авто-кликера
+local autoClicking = false
+local delay = 0.1
+
+ToggleButton.MouseButton1Click:Connect(function()
+    autoClicking = not autoClicking
+    if autoClicking then
+        ToggleButton.Text = "Disable"
+    else
+        ToggleButton.Text = "Enable"
+    end
+end)
+
+DelayInput.FocusLost:Connect(function(enterPressed)
+    local newDelay = tonumber(DelayInput.Text)
+    if newDelay and newDelay > 0 then
+        delay = newDelay
+    else
+        DelayInput.Text = tostring(delay)
+    end
+end)
+
+-- Функция клика по центру экрана
+spawn(function()
+    while true do
+        if autoClicking then
+            local screenCenter = workspace.CurrentCamera.ViewportSize / 2
+            game:GetService("VirtualInputManager"):SendMouseButtonEvent(screenCenter.X, screenCenter.Y, 0, true, nil, 0)
+            game:GetService("VirtualInputManager"):SendMouseButtonEvent(screenCenter.X, screenCenter.Y, 0, false, nil, 0)
+            wait(delay)
+        else
+            wait(0.1)
+        end
+    end
+end)
+
+-- Логика сворачивания меню
+local minimized = false
+
+MinimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        Frame.Size = UDim2.new(0, 300, 0, 50)
+        MinimizeButton.Text = "+"
+    else
+        Frame.Size = UDim2.new(0, 300, 0, 200)
+        MinimizeButton.Text = "-"
+    end
+end)
