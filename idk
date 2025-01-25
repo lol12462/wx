@@ -1,0 +1,172 @@
+-- Создаем ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.Name = "SpeedAndJumpGUI"
+
+-- Создаем Frame для GUI
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 150)
+frame.Position = UDim2.new(0.5, -100, 0.5, -75)
+frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+frame.Parent = screenGui
+frame.Visible = false
+
+-- Возможность перемещения GUI
+local dragging = false
+local dragInput, dragStart, startPos
+
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+frame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+local userInputService = game:GetService("UserInputService")
+userInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+
+-- Кнопка открытия GUI
+local openButton = Instance.new("TextButton")
+openButton.Size = UDim2.new(0, 150, 0, 50)
+openButton.Position = UDim2.new(1, -160, 0.5, -25)
+openButton.AnchorPoint = Vector2.new(1, 0.5)
+openButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+openButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+openButton.Font = Enum.Font.SourceSans
+openButton.TextSize = 16
+openButton.Text = "Открыть параметры"
+openButton.Parent = screenGui
+
+-- Кнопка закрытия GUI
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -1, 0, -25)
+closeButton.AnchorPoint = Vector2.new(1, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Font = Enum.Font.SourceSans
+closeButton.TextSize = 22
+closeButton.Text = "X"
+closeButton.Parent = frame
+
+-- Заголовок
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.SourceSansBold
+title.Text = "Настройки"
+title.TextSize = 18
+title.Parent = frame
+
+-- Ползунок для скорости
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(1, 0, 0, 20)
+speedLabel.Position = UDim2.new(0, 0, 0, 40)
+speedLabel.BackgroundTransparency = 1
+speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedLabel.Font = Enum.Font.SourceSans
+speedLabel.TextSize = 16
+speedLabel.Text = "Скорость"
+speedLabel.Parent = frame
+
+local speedBox = Instance.new("TextBox")
+speedBox.Size = UDim2.new(1, -10, 0, 20)
+speedBox.Position = UDim2.new(0, 5, 0, 65)
+speedBox.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+speedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedBox.Font = Enum.Font.SourceSans
+speedBox.PlaceholderText = "Введите скорость (макс 100)"
+speedBox.Text = ""
+speedBox.TextSize = 14
+speedBox.Parent = frame
+
+-- Ползунок для прыжка
+local jumpLabel = Instance.new("TextLabel")
+jumpLabel.Size = UDim2.new(1, 0, 0, 20)
+jumpLabel.Position = UDim2.new(0, 0, 0, 90)
+jumpLabel.BackgroundTransparency = 1
+jumpLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+jumpLabel.Font = Enum.Font.SourceSans
+jumpLabel.TextSize = 16
+jumpLabel.Text = "Прыжок"
+jumpLabel.Parent = frame
+
+local jumpBox = Instance.new("TextBox")
+jumpBox.Size = UDim2.new(1, -10, 0, 20)
+jumpBox.Position = UDim2.new(0, 5, 0, 115)
+jumpBox.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+jumpBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+jumpBox.Font = Enum.Font.SourceSans
+jumpBox.PlaceholderText = "Введите прыжок (макс 100)"
+jumpBox.Text = ""
+jumpBox.TextSize = 14
+jumpBox.Parent = frame
+
+-- Функция для изменения скорости и прыжка
+local function updatePlayerStats()
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+	if humanoid then
+		-- Обновление скорости
+		local speed = tonumber(speedBox.Text)
+		if speed and speed > 0 and speed <= 100 then
+			humanoid.WalkSpeed = speed
+		else
+			speedBox.Text = "Неверное значение"
+		end
+
+		-- Обновление прыжка
+		local jump = tonumber(jumpBox.Text)
+		if jump and jump > 0 and jump <= 100 then
+			humanoid.JumpPower = jump
+		else
+			jumpBox.Text = "Неверное значение"
+		end
+	end
+end
+
+-- События для изменения значений
+speedBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed then
+		updatePlayerStats()
+	end
+end)
+
+jumpBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed then
+		updatePlayerStats()
+	end
+end)
+
+-- События для открытия и закрытия GUI
+openButton.MouseButton1Click:Connect(function()
+	frame.Visible = true
+	openButton.Visible = false
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+	frame.Visible = false
+	openButton.Visible = true
+end)
