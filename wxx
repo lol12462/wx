@@ -2,7 +2,6 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
-local Workspace = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -197,14 +196,6 @@ local function getClosestEnemy()
     return closestEnemy
 end
 
--- Проверка видимости цели
-local function isVisible(targetPosition)
-    local ray = Ray.new(Camera.CFrame.Position, (targetPosition - Camera.CFrame.Position).unit * 500)  -- Прокидываем луч до цели
-    local hitPart, hitPosition = workspace:FindPartOnRay(ray, LocalPlayer.Character, false, true)
-    
-    return hitPart == nil -- Если луч не столкнулся с частью (стеной), значит цель видна
-end
-
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.V then
         isMenuVisible = not isMenuVisible
@@ -225,11 +216,9 @@ RunService.RenderStepped:Connect(function()
         local closestEnemy = getClosestEnemy()
         if closestEnemy then
             local enemyPosition = closestEnemy.Position
-            if isVisible(enemyPosition) then  -- Проверяем, видна ли цель
-                local direction = (enemyPosition - Camera.CFrame.Position).Unit
-                local lookAt = CFrame.lookAt(Camera.CFrame.Position, Camera.CFrame.Position + direction)
-                Camera.CFrame = lookAt
-            end
+            local direction = (enemyPosition - Camera.CFrame.Position).Unit
+            local lookAt = CFrame.lookAt(Camera.CFrame.Position, Camera.CFrame.Position + direction)
+            Camera.CFrame = lookAt
         end
     end
 end)
