@@ -1,109 +1,119 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+
+local LocalPlayer = Players.LocalPlayer
+
+local aiming = false
+local isHighlightActive = true
+local isMenuVisible = true
+local highlightColor = Color3.fromRGB(0, 255, 0) -- Цвет подсветки (зелёный)
+
 -- Создаем ScreenGui
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "HighlightToggleMenu"
-screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.Name = "HighlightAndAimMenu"
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- Создаем кнопку
-local button = Instance.new("TextButton")
-button.Size = UDim2.new(0, 200, 0, 50)
-button.Position = UDim2.new(0.5, -100, 0.5, -25)
-button.Text = "Выключить Вх"
-button.BackgroundColor3 = Color3.fromRGB(0, 170, 255) -- Голубой фон
-button.TextColor3 = Color3.fromRGB(255, 255, 255) -- Белый текст
-button.Font = Enum.Font.SourceSansBold
-button.TextSize = 20
-button.BorderSizePixel = 0
-button.Parent = screenGui
+-- Создаем фрейм для кнопок
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 220, 0, 120)
+frame.Position = UDim2.new(0.5, -110, 0.5, -60)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
 
--- Добавляем круглые края
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 12)
-uiCorner.Parent = button
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0, 12)
+frameCorner.Parent = frame
 
--- Добавляем тень
-local shadow = Instance.new("Frame")
-shadow.Size = UDim2.new(1, 8, 1, 8)
-shadow.Position = UDim2.new(0, -4, 0, -4)
-shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-shadow.BackgroundTransparency = 0.5
-shadow.BorderSizePixel = 0
-shadow.ZIndex = 0
-shadow.Parent = button
-
-local shadowCorner = Instance.new("UICorner")
-shadowCorner.CornerRadius = UDim.new(0, 12)
-shadowCorner.Parent = shadow
-
--- Делаем кнопку перетаскиваемой
+-- Делаем фрейм перетаскиваемым
 local dragging = false
 local dragStart, startPos
 
-button.InputBegan:Connect(function(input)
+frame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragStart = input.Position
-        startPos = button.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
+        startPos = frame.Position
     end
 end)
 
-button.InputChanged:Connect(function(input)
+frame.InputChanged:Connect(function(input)
     if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
         local delta = input.Position - dragStart
-        button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
 
--- Флаг состояния работы подсветки
-local isHighlightActive = true
+frame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
 
--- Локальный скрипт для подсветки игроков через стены
-local player = game.Players.LocalPlayer
-local players = game:GetService("Players")
-local runService = game:GetService("RunService")
+-- Создаем кнопку для подсветки
+local highlightButton = Instance.new("TextButton")
+highlightButton.Size = UDim2.new(0, 200, 0, 50)
+highlightButton.Position = UDim2.new(0, 10, 0, 10)
+highlightButton.Text = "Выключить Вх"
+highlightButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+highlightButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+highlightButton.Font = Enum.Font.SourceSansBold
+highlightButton.TextSize = 20
+highlightButton.BorderSizePixel = 0
+highlightButton.Parent = frame
 
-local highlightColor = Color3.fromRGB(0, 255, 0) -- Цвет подсветки (зелёный)
+local uiCorner1 = Instance.new("UICorner")
+uiCorner1.CornerRadius = UDim.new(0, 12)
+uiCorner1.Parent = highlightButton
+
+-- Создаем кнопку для прицеливания
+local aimButton = Instance.new("TextButton")
+aimButton.Size = UDim2.new(0, 200, 0, 50)
+aimButton.Position = UDim2.new(0, 10, 0, 70)
+aimButton.Text = "Активировать прицел"
+aimButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+aimButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+aimButton.Font = Enum.Font.SourceSansBold
+aimButton.TextSize = 20
+aimButton.BorderSizePixel = 0
+aimButton.Parent = frame
+
+local uiCorner2 = Instance.new("UICorner")
+uiCorner2.CornerRadius = UDim.new(0, 12)
+uiCorner2.Parent = aimButton
 
 -- Функция для создания подсветки вокруг головы игрока
 local function createGlowEffect(targetPlayer)
-    -- Проверяем, есть ли у игрока персонаж и часть "Head"
     if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
         local character = targetPlayer.Character
         local head = character:FindFirstChild("Head")
-        
-        -- Проверка, чтобы не создавать подсветку дважды
+
         local existingGlow = character:FindFirstChild("GlowBox")
         if existingGlow then
             return
         end
 
-        -- Создаём BillboardGui для подсветки
         local glowGui = Instance.new("BillboardGui")
         glowGui.Name = "GlowBox"
         glowGui.Parent = character
-        glowGui.Adornee = head  -- Привязываем подсветку к голове
-        glowGui.Size = UDim2.new(0, 10, 0, 10)  -- Размер подсветки (квадрат)
-        glowGui.StudsOffset = Vector3.new(0, 0, 0)  -- Подсветка на уровне головы
+        glowGui.Adornee = head
+        glowGui.Size = UDim2.new(0, 10, 0, 10)
+        glowGui.StudsOffset = Vector3.new(0, 0, 0)
 
-        -- Настройка рамки
         local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(0, 10, 0, 10)  -- Размер квадратика (площадь 10x10)
+        frame.Size = UDim2.new(0, 10, 0, 10)
         frame.BackgroundTransparency = 0.5
         frame.BackgroundColor3 = highlightColor
         frame.BorderSizePixel = 0
         frame.Parent = glowGui
 
-        -- Настройка рамки для подсветки
         local outline = Instance.new("UIStroke")
         outline.Thickness = 2
         outline.Color = highlightColor
         outline.Parent = frame
 
-        -- Включение всегда на переднем плане
         glowGui.AlwaysOnTop = true
     end
 end
@@ -121,15 +131,15 @@ end
 -- Обновление подсветки для всех игроков
 local function updateGlowEffects()
     if not isHighlightActive then return end
-    for _, targetPlayer in pairs(players:GetPlayers()) do
-        if targetPlayer ~= player then
+    for _, targetPlayer in pairs(Players:GetPlayers()) do
+        if targetPlayer ~= LocalPlayer and targetPlayer.Team ~= LocalPlayer.Team then
             createGlowEffect(targetPlayer)
         end
     end
 end
 
--- Обработчик появления нового игрока
-players.PlayerAdded:Connect(function(newPlayer)
+-- Обработчики событий для подсветки
+Players.PlayerAdded:Connect(function(newPlayer)
     newPlayer.CharacterAdded:Connect(function()
         if isHighlightActive then
             createGlowEffect(newPlayer)
@@ -137,28 +147,78 @@ players.PlayerAdded:Connect(function(newPlayer)
     end)
 end)
 
--- Обработчик удаления игрока
-players.PlayerRemoving:Connect(function(leavingPlayer)
+Players.PlayerRemoving:Connect(function(leavingPlayer)
     removeGlowEffect(leavingPlayer)
 end)
 
--- Постоянное обновление подсветки
-runService.Heartbeat:Connect(updateGlowEffects)
+RunService.Heartbeat:Connect(updateGlowEffects)
 
--- Применяем подсветку ко всем игрокам при старте
-updateGlowEffects()
-
--- Обработчик нажатия кнопки
-button.MouseButton1Click:Connect(function()
+-- Кнопка для подсветки
+highlightButton.MouseButton1Click:Connect(function()
     isHighlightActive = not isHighlightActive
     if isHighlightActive then
-        button.Text = "Выключить Вх"
+        highlightButton.Text = "Выключить Вх"
         updateGlowEffects()
     else
-        button.Text = "Включить Вх"
-        -- Удаляем подсветку у всех игроков
-        for _, targetPlayer in pairs(players:GetPlayers()) do
+        highlightButton.Text = "Включить Вх"
+        for _, targetPlayer in pairs(Players:GetPlayers()) do
             removeGlowEffect(targetPlayer)
+        end
+    end
+end)
+
+-- Кнопка для прицеливания
+aimButton.MouseButton1Click:Connect(function()
+    aiming = not aiming
+    if aiming then
+        aimButton.Text = "Деактивировать прицел"
+    else
+        aimButton.Text = "Активировать прицел"
+    end
+end)
+
+local function getClosestEnemy()
+    local closestEnemy = nil
+    local shortestDistance = math.huge
+
+    for _, targetPlayer in pairs(Players:GetPlayers()) do
+        if targetPlayer ~= LocalPlayer and targetPlayer.Team ~= LocalPlayer.Team and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local enemyPosition = targetPlayer.Character.HumanoidRootPart.Position
+            local distance = (Camera.CFrame.Position - enemyPosition).Magnitude
+
+            if distance < shortestDistance then
+                closestEnemy = targetPlayer.Character.HumanoidRootPart
+                shortestDistance = distance
+            end
+        end
+    end
+
+    return closestEnemy
+end
+
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.V then
+        isMenuVisible = not isMenuVisible
+        frame.Visible = isMenuVisible
+    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+        aiming = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        aiming = false
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if aiming then
+        local closestEnemy = getClosestEnemy()
+        if closestEnemy then
+            local enemyPosition = closestEnemy.Position
+            local direction = (enemyPosition - Camera.CFrame.Position).Unit
+            local lookAt = CFrame.lookAt(Camera.CFrame.Position, Camera.CFrame.Position + direction)
+            Camera.CFrame = lookAt
         end
     end
 end)
