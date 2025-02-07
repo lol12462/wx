@@ -1,0 +1,138 @@
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Header = Instance.new("TextLabel")
+local CloseButton = Instance.new("TextButton")
+local MinimizeButton = Instance.new("TextButton")
+local UNCButton = Instance.new("TextButton")
+local SUNCButton = Instance.new("TextButton")
+local InfiniteYieldButton = Instance.new("TextButton")
+local TestLevelButton = Instance.new("TextButton")
+local DEXButton = Instance.new("TextButton")
+
+-- Parent the GUI to the player's screen
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Name = "CustomGUI"
+
+-- MainFrame setup
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+MainFrame.Position = UDim2.new(0.35, 0, 0.3, 0)
+MainFrame.Size = UDim2.new(0, 400, 0, 300)
+MainFrame.Visible = true
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.BorderSizePixel = 2
+MainFrame.BorderColor3 = Color3.new(1, 1, 1)
+
+-- Header setup
+Header.Parent = MainFrame
+Header.Text = "Всё для теста софта!"
+Header.Size = UDim2.new(1, 0, 0, 40)
+Header.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+Header.TextColor3 = Color3.new(1, 1, 1)
+Header.Font = Enum.Font.GothamBold
+Header.TextSize = 14
+
+-- Close Button setup
+CloseButton.Parent = MainFrame
+CloseButton.Text = "X"
+CloseButton.Size = UDim2.new(0, 40, 0, 40)
+CloseButton.Position = UDim2.new(1, -45, 0, 0)
+CloseButton.BackgroundColor3 = Color3.new(0, 0, 0)
+CloseButton.TextSize = 14
+CloseButton.TextColor3 = Color3.new(1, 1, 1)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+end)
+
+-- Minimize Button setup
+MinimizeButton.Parent = MainFrame
+MinimizeButton.Text = "_"
+MinimizeButton.Size = UDim2.new(0, 40, 0, 40)
+MinimizeButton.Position = UDim2.new(1, -90, 0, 0)
+MinimizeButton.BackgroundColor3 = Color3.new(0, 0, 0)
+MinimizeButton.TextSize = 14
+MinimizeButton.TextColor3 = Color3.new(1, 1, 1)
+MinimizeButton.Font = Enum.Font.GothamBold
+MinimizeButton.MouseButton1Click:Connect(function()
+    local isMinimized = MainFrame.Size ~= UDim2.new(0, 400, 0, 40)
+    if isMinimized then
+        MainFrame.Size = UDim2.new(0, 400, 0, 40)
+        for _, child in ipairs(MainFrame:GetChildren()) do
+            if child ~= Header and child ~= CloseButton and child ~= MinimizeButton then
+                child.Visible = false
+            end
+        end
+    else
+        MainFrame.Size = UDim2.new(0, 400, 0, 300)
+        for _, child in ipairs(MainFrame:GetChildren()) do
+            child.Visible = true
+        end
+    end
+end)
+
+-- UNC TEST Button
+UNCButton.Parent = MainFrame
+UNCButton.Text = "UNC TEST"
+UNCButton.Size = UDim2.new(0, 300, 0, 40)
+UNCButton.Position = UDim2.new(0, 50, 0, 60)
+UNCButton.BackgroundColor3 = Color3.new(0, 0, 0)
+UNCButton.TextSize = 14
+UNCButton.TextColor3 = Color3.new(1, 1, 1)
+UNCButton.Font = Enum.Font.GothamBold
+UNCButton.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/unified-naming-convention/NamingStandard/refs/heads/main/UNCCheckEnv.lua", true))()
+end)
+
+-- SUNC TEST Button
+SUNCButton.Parent = MainFrame
+SUNCButton.Text = "SUNC TEST"
+SUNCButton.Size = UDim2.new(0, 300, 0, 40)
+SUNCButton.Position = UDim2.new(0, 50, 0, 110)
+SUNCButton.BackgroundColor3 = Color3.new(0, 0, 0)
+SUNCButton.TextSize = 14
+SUNCButton.TextColor3 = Color3.new(1, 1, 1)
+SUNCButton.Font = Enum.Font.GothamBold
+SUNCButton.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://gitlab.com/sens3/nebunu/-/raw/main/HummingBird8's_sUNC_yes_i_moved_to_gitlab_because_my_github_acc_got_brickedd/sUNCm0m3n7.lua"))()
+end)
+
+-- Infinite Yield Button
+InfiniteYieldButton.Parent = MainFrame
+InfiniteYieldButton.Text = "Infinite Yield"
+InfiniteYieldButton.Size = UDim2.new(0, 300, 0, 40)
+InfiniteYieldButton.Position = UDim2.new(0, 50, 0, 160)
+InfiniteYieldButton.BackgroundColor3 = Color3.new(0, 0, 0)
+InfiniteYieldButton.TextSize = 14
+InfiniteYieldButton.TextColor3 = Color3.new(1, 1, 1)
+InfiniteYieldButton.Font = Enum.Font.GothamBold
+InfiniteYieldButton.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+end)
+
+-- TEST LVL CHEAT Button
+TestLevelButton.Parent = MainFrame
+TestLevelButton.Text = "TEST LVL CHEAT"
+TestLevelButton.Size = UDim2.new(0, 300, 0, 40)
+TestLevelButton.Position = UDim2.new(0, 50, 0, 210)
+TestLevelButton.BackgroundColor3 = Color3.new(0, 0, 0)
+TestLevelButton.TextSize = 14
+TestLevelButton.TextColor3 = Color3.new(1, 1, 1)
+TestLevelButton.Font = Enum.Font.GothamBold
+TestLevelButton.MouseButton1Click:Connect(function()
+    printidentity()
+end)
+
+-- DEX Button
+DEXButton.Parent = MainFrame
+DEXButton.Text = "DEX"
+DEXButton.Size = UDim2.new(0, 300, 0, 40)
+DEXButton.Position = UDim2.new(0, 50, 0, 260)
+DEXButton.BackgroundColor3 = Color3.new(0, 0, 0)
+DEXButton.TextSize = 14
+DEXButton.TextColor3 = Color3.new(1, 1, 1)
+DEXButton.Font = Enum.Font.GothamBold
+DEXButton.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/MassiveHubs/loadstring/refs/heads/main/DexXenoAndRezware'))()
+end)
