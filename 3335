@@ -1,0 +1,181 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+
+local loadingFrame = Instance.new("Frame")
+loadingFrame.Size = UDim2.new(0, 300, 0, 100)
+loadingFrame.Position = UDim2.new(0.5, -150, 0.5, -50)
+loadingFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+loadingFrame.BorderSizePixel = 2
+loadingFrame.Parent = screenGui
+
+local loadingText = Instance.new("TextLabel")
+loadingText.Size = UDim2.new(1, 0, 1, 0)
+loadingText.Text = "Loading... by w1z4er, @chelik_XDD"
+loadingText.TextColor3 = Color3.fromRGB(255, 255, 255)
+loadingText.BackgroundTransparency = 1
+loadingText.Font = Enum.Font.SourceSansBold
+loadingText.TextSize = 24
+loadingText.Parent = loadingFrame
+
+for i = 1, 10 do
+    loadingText.TextTransparency = 1 - (i * 0.1)
+    wait(0.1)
+end
+
+wait(2)
+for i = 1, 10 do
+    loadingText.TextTransparency = i * 0.1
+    wait(0.1)
+end
+loadingFrame:Destroy()
+
+local panel = Instance.new("Frame")
+panel.Size = UDim2.new(0, 350, 0, 400)
+panel.Position = UDim2.new(0.5, -175, 0.5, -200)
+panel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+panel.BorderSizePixel = 2
+panel.Parent = screenGui
+
+local isPanelVisible = true
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.LeftControl then
+        isPanelVisible = not isPanelVisible
+        panel.Visible = isPanelVisible
+    end
+end)
+
+local isMinimized = false
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 30, 0, 30)
+toggleButton.Position = UDim2.new(1, -35, 0, 5)
+toggleButton.Text = "+"
+toggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.Parent = screenGui
+
+toggleButton.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    panel.Visible = not isMinimized
+end)
+
+local isESPEnabled = true
+local espButton = Instance.new("TextButton")
+espButton.Size = UDim2.new(0, 200, 0, 50)
+espButton.Position = UDim2.new(0.5, -100, 0, 50)
+espButton.Text = "Toggle ESP"
+espButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+espButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+espButton.Parent = panel
+
+espButton.MouseButton1Click:Connect(function()
+    isESPEnabled = not isESPEnabled
+    if not isESPEnabled then
+        for _, v in pairs(Players:GetPlayers()) do
+            if v ~= player and v.Character then
+                for _, part in pairs(v.Character:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        local chams = part:FindFirstChild("Chams")
+                        if chams then
+                            chams:Destroy()
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+local colorButton = Instance.new("TextButton")
+colorButton.Size = UDim2.new(0, 200, 0, 50)
+colorButton.Position = UDim2.new(0.5, -100, 0, 110)
+colorButton.Text = "Change ESP Color"
+colorButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+colorButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+colorButton.Parent = panel
+
+local colors = {
+    Color3.fromRGB(255, 0, 0),
+    Color3.fromRGB(0, 255, 0),
+    Color3.fromRGB(0, 0, 255),
+    Color3.fromRGB(255, 255, 0)
+}
+local colorIndex = 1
+
+colorButton.MouseButton1Click:Connect(function()
+    colorIndex = colorIndex % #colors + 1
+end)
+
+local speedValue = 16
+local jumpValue = 50
+
+local speedSlider = Instance.new("TextBox")
+speedSlider.Size = UDim2.new(0, 200, 0, 50)
+speedSlider.Position = UDim2.new(0.5, -100, 0, 170)
+speedSlider.Text = "Speed: " .. speedValue
+speedSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+speedSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedSlider.Parent = panel
+
+local jumpSlider = Instance.new("TextBox")
+jumpSlider.Size = UDim2.new(0, 200, 0, 50)
+jumpSlider.Position = UDim2.new(0.5, -100, 0, 230)
+jumpSlider.Text = "Jump: " .. jumpValue
+jumpSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+jumpSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+jumpSlider.Parent = panel
+
+speedSlider.FocusLost:Connect(function()
+    local num = tonumber(speedSlider.Text:match("%d+"))
+    if num and num >= 1 and num <= 200 then
+        speedValue = num
+        speedSlider.Text = "Speed: " .. speedValue
+    else
+        speedSlider.Text = "Speed: " .. speedValue
+    end
+end)
+
+jumpSlider.FocusLost:Connect(function()
+    local num = tonumber(jumpSlider.Text:match("%d+"))
+    if num and num >= 1 and num <= 200 then
+        jumpValue = num
+        jumpSlider.Text = "Jump: " .. jumpValue
+    else
+        jumpSlider.Text = "Jump: " .. jumpValue
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = speedValue
+        player.Character.Humanoid.JumpPower = jumpValue
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if isESPEnabled then
+        for _, v in pairs(Players:GetPlayers()) do
+            if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                for _, part in pairs(v.Character:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        local chams = part:FindFirstChild("Chams")
+                        if not chams then
+                            chams = Instance.new("BoxHandleAdornment", part)
+                            chams.Name = "Chams"
+                            chams.Adornee = part
+                            chams.AlwaysOnTop = true
+                            chams.ZIndex = 4
+                            chams.Size = part.Size + Vector3.new(0.02, 0.02, 0.02)
+                        end
+                        chams.Color3 = colors[colorIndex]
+                    end
+                end
+            end
+        end
+    end
+end)
